@@ -43,31 +43,6 @@ final class DecodeThread extends Thread {
   private Handler handler;
   private final CountDownLatch handlerInitLatch;
 
-  static final Vector<BarcodeFormat> PRODUCT_FORMATS;
-  static final Vector<BarcodeFormat> ONE_D_FORMATS;
-  static final Vector<BarcodeFormat> QR_CODE_FORMATS;
-  static final Vector<BarcodeFormat> DATA_MATRIX_FORMATS;
-  static {
-    PRODUCT_FORMATS = new Vector<BarcodeFormat>(5);
-    PRODUCT_FORMATS.add(BarcodeFormat.UPC_A);
-    PRODUCT_FORMATS.add(BarcodeFormat.UPC_E);
-    PRODUCT_FORMATS.add(BarcodeFormat.EAN_13);
-    PRODUCT_FORMATS.add(BarcodeFormat.EAN_8);
-    PRODUCT_FORMATS.add(BarcodeFormat.RSS14);
-    ONE_D_FORMATS = new Vector<BarcodeFormat>(PRODUCT_FORMATS.size() + 4);
-    ONE_D_FORMATS.addAll(PRODUCT_FORMATS);
-    ONE_D_FORMATS.add(BarcodeFormat.CODE_39);
-    ONE_D_FORMATS.add(BarcodeFormat.CODE_93);
-    ONE_D_FORMATS.add(BarcodeFormat.CODE_128);
-    ONE_D_FORMATS.add(BarcodeFormat.ITF);
-    QR_CODE_FORMATS = new Vector<BarcodeFormat>(1);
-    QR_CODE_FORMATS.add(BarcodeFormat.QR_CODE);
-    DATA_MATRIX_FORMATS = new Vector<BarcodeFormat>(1);
-    DATA_MATRIX_FORMATS.add(BarcodeFormat.DATA_MATRIX);
-  }
-
-  
-  
   DecodeThread(CaptureActivity activity,
                Vector<BarcodeFormat> decodeFormats,
                String characterSet,
@@ -82,22 +57,21 @@ final class DecodeThread extends Thread {
     if (decodeFormats == null || decodeFormats.isEmpty()) {
       SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
       decodeFormats = new Vector<BarcodeFormat>();
-      //if (prefs.getBoolean(PreferencesActivity.KEY_DECODE_1D, true)) {
-        decodeFormats.addAll(ONE_D_FORMATS);
-      //}
-      //if (prefs.getBoolean(PreferencesActivity.KEY_DECODE_QR, true)) {
-        decodeFormats.addAll(QR_CODE_FORMATS);
-      //}
-      //if (prefs.getBoolean(PreferencesActivity.KEY_DECODE_DATA_MATRIX, true)) {
-        decodeFormats.addAll(DATA_MATRIX_FORMATS);
-      //}
+      if (prefs.getBoolean(PreferencesActivity.KEY_DECODE_1D, true)) {
+        decodeFormats.addAll(DecodeFormatManager.ONE_D_FORMATS);
+      }
+      if (prefs.getBoolean(PreferencesActivity.KEY_DECODE_QR, true)) {
+        decodeFormats.addAll(DecodeFormatManager.QR_CODE_FORMATS);
+      }
+      if (prefs.getBoolean(PreferencesActivity.KEY_DECODE_DATA_MATRIX, true)) {
+        decodeFormats.addAll(DecodeFormatManager.DATA_MATRIX_FORMATS);
+      }
     }
     hints.put(DecodeHintType.POSSIBLE_FORMATS, decodeFormats);
 
     if (characterSet != null) {
       hints.put(DecodeHintType.CHARACTER_SET, characterSet);
     }
-
     hints.put(DecodeHintType.NEED_RESULT_POINT_CALLBACK, resultPointCallback);
   }
 

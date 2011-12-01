@@ -17,7 +17,7 @@
 package com.google.zxing.common.reedsolomon;
 
 /**
- * <p>Represents a polynomial whose coefficients are elements of GF(256).
+ * <p>Represents a polynomial whose coefficients are elements of a GF.
  * Instances of this class are immutable.</p>
  *
  * <p>Much credit is due to William Rucklidge since portions of this code are an indirect
@@ -25,21 +25,21 @@ package com.google.zxing.common.reedsolomon;
  *
  * @author Sean Owen
  */
-final class GF256Poly {
+final class GenericGFPoly {
 
-  private final GF256 field;
+  private final GenericGF field;
   private final int[] coefficients;
 
   /**
-   * @param field the {@link GF256} instance representing the field to use
+   * @param field the {@link GenericGF} instance representing the field to use
    * to perform computations
-   * @param coefficients coefficients as ints representing elements of GF(256), arranged
+   * @param coefficients coefficients as ints representing elements of GF(size), arranged
    * from most significant (highest-power term) coefficient to least significant
    * @throws IllegalArgumentException if argument is null or empty,
    * or if leading coefficient is 0 and this is not a
    * constant polynomial (that is, it is not the monomial "0")
    */
-  GF256Poly(GF256 field, int[] coefficients) {
+  GenericGFPoly(GenericGF field, int[] coefficients) {
     if (coefficients == null || coefficients.length == 0) {
       throw new IllegalArgumentException();
     }
@@ -104,20 +104,20 @@ final class GF256Poly {
       // Just the sum of the coefficients
       int result = 0;
       for (int i = 0; i < size; i++) {
-        result = GF256.addOrSubtract(result, coefficients[i]);
+        result = GenericGF.addOrSubtract(result, coefficients[i]);
       }
       return result;
     }
     int result = coefficients[0];
     for (int i = 1; i < size; i++) {
-      result = GF256.addOrSubtract(field.multiply(a, result), coefficients[i]);
+      result = GenericGF.addOrSubtract(field.multiply(a, result), coefficients[i]);
     }
     return result;
   }
 
-  GF256Poly addOrSubtract(GF256Poly other) {
+  GenericGFPoly addOrSubtract(GenericGFPoly other) {
     if (!field.equals(other.field)) {
-      throw new IllegalArgumentException("GF256Polys do not have same GF256 field");
+      throw new IllegalArgumentException("GenericGFPolys do not have same GenericGF field");
     }
     if (isZero()) {
       return other;
@@ -139,15 +139,15 @@ final class GF256Poly {
     System.arraycopy(largerCoefficients, 0, sumDiff, 0, lengthDiff);
 
     for (int i = lengthDiff; i < largerCoefficients.length; i++) {
-      sumDiff[i] = GF256.addOrSubtract(smallerCoefficients[i - lengthDiff], largerCoefficients[i]);
+      sumDiff[i] = GenericGF.addOrSubtract(smallerCoefficients[i - lengthDiff], largerCoefficients[i]);
     }
 
-    return new GF256Poly(field, sumDiff);
+    return new GenericGFPoly(field, sumDiff);
   }
 
-  GF256Poly multiply(GF256Poly other) {
+  GenericGFPoly multiply(GenericGFPoly other) {
     if (!field.equals(other.field)) {
-      throw new IllegalArgumentException("GF256Polys do not have same GF256 field");
+      throw new IllegalArgumentException("GenericGFPolys do not have same GenericGF field");
     }
     if (isZero() || other.isZero()) {
       return field.getZero();
@@ -160,14 +160,14 @@ final class GF256Poly {
     for (int i = 0; i < aLength; i++) {
       int aCoeff = aCoefficients[i];
       for (int j = 0; j < bLength; j++) {
-        product[i + j] = GF256.addOrSubtract(product[i + j],
+        product[i + j] = GenericGF.addOrSubtract(product[i + j],
             field.multiply(aCoeff, bCoefficients[j]));
       }
     }
-    return new GF256Poly(field, product);
+    return new GenericGFPoly(field, product);
   }
 
-  GF256Poly multiply(int scalar) {
+  GenericGFPoly multiply(int scalar) {
     if (scalar == 0) {
       return field.getZero();
     }
@@ -179,10 +179,10 @@ final class GF256Poly {
     for (int i = 0; i < size; i++) {
       product[i] = field.multiply(coefficients[i], scalar);
     }
-    return new GF256Poly(field, product);
+    return new GenericGFPoly(field, product);
   }
 
-  GF256Poly multiplyByMonomial(int degree, int coefficient) {
+  GenericGFPoly multiplyByMonomial(int degree, int coefficient) {
     if (degree < 0) {
       throw new IllegalArgumentException();
     }
@@ -194,19 +194,19 @@ final class GF256Poly {
     for (int i = 0; i < size; i++) {
       product[i] = field.multiply(coefficients[i], coefficient);
     }
-    return new GF256Poly(field, product);
+    return new GenericGFPoly(field, product);
   }
 
-  GF256Poly[] divide(GF256Poly other) {
+  GenericGFPoly[] divide(GenericGFPoly other) {
     if (!field.equals(other.field)) {
-      throw new IllegalArgumentException("GF256Polys do not have same GF256 field");
+      throw new IllegalArgumentException("GenericGFPolys do not have same GenericGF field");
     }
     if (other.isZero()) {
       throw new IllegalArgumentException("Divide by 0");
     }
 
-    GF256Poly quotient = field.getZero();
-    GF256Poly remainder = this;
+    GenericGFPoly quotient = field.getZero();
+    GenericGFPoly remainder = this;
 
     int denominatorLeadingTerm = other.getCoefficient(other.getDegree());
     int inverseDenominatorLeadingTerm = field.inverse(denominatorLeadingTerm);
@@ -214,13 +214,13 @@ final class GF256Poly {
     while (remainder.getDegree() >= other.getDegree() && !remainder.isZero()) {
       int degreeDifference = remainder.getDegree() - other.getDegree();
       int scale = field.multiply(remainder.getCoefficient(remainder.getDegree()), inverseDenominatorLeadingTerm);
-      GF256Poly term = other.multiplyByMonomial(degreeDifference, scale);
-      GF256Poly iterationQuotient = field.buildMonomial(degreeDifference, scale);
+      GenericGFPoly term = other.multiplyByMonomial(degreeDifference, scale);
+      GenericGFPoly iterationQuotient = field.buildMonomial(degreeDifference, scale);
       quotient = quotient.addOrSubtract(iterationQuotient);
       remainder = remainder.addOrSubtract(term);
     }
 
-    return new GF256Poly[] { quotient, remainder };
+    return new GenericGFPoly[] { quotient, remainder };
   }
 
   public String toString() {

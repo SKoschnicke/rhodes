@@ -18,10 +18,9 @@ package com.google.zxing.qrcode.decoder;
 
 import com.google.zxing.ChecksumException;
 import com.google.zxing.FormatException;
-import com.google.zxing.NotFoundException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.common.DecoderResult;
-import com.google.zxing.common.reedsolomon.GF256;
+import com.google.zxing.common.reedsolomon.GenericGF;
 import com.google.zxing.common.reedsolomon.ReedSolomonDecoder;
 import com.google.zxing.common.reedsolomon.ReedSolomonException;
 
@@ -38,11 +37,10 @@ public final class Decoder {
   private final ReedSolomonDecoder rsDecoder;
 
   public Decoder() {
-    rsDecoder = new ReedSolomonDecoder(GF256.QR_CODE_FIELD);
+    rsDecoder = new ReedSolomonDecoder(GenericGF.QR_CODE_FIELD_256);
   }
 
-  public DecoderResult decode(boolean[][] image)
-      throws ChecksumException, FormatException, NotFoundException {
+  public DecoderResult decode(boolean[][] image) throws ChecksumException, FormatException {
     return decode(image, null);
   }
 
@@ -52,12 +50,10 @@ public final class Decoder {
    *
    * @param image booleans representing white/black QR Code modules
    * @return text and bytes encoded within the QR Code
-   * @throws NotFoundException if the QR Code cannot be found
    * @throws FormatException if the QR Code cannot be decoded
    * @throws ChecksumException if error correction fails
    */
-  public DecoderResult decode(boolean[][] image, Hashtable hints)
-      throws ChecksumException, FormatException, NotFoundException {
+  public DecoderResult decode(boolean[][] image, Hashtable hints) throws ChecksumException, FormatException {
     int dimension = image.length;
     BitMatrix bits = new BitMatrix(dimension);
     for (int i = 0; i < dimension; i++) {
@@ -70,7 +66,7 @@ public final class Decoder {
     return decode(bits, hints);
   }
 
-  public DecoderResult decode(BitMatrix bits) throws ChecksumException, FormatException, NotFoundException {
+  public DecoderResult decode(BitMatrix bits) throws ChecksumException, FormatException {
     return decode(bits, null);
   }
 

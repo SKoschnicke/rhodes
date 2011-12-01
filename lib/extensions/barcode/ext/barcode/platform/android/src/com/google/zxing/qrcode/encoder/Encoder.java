@@ -21,7 +21,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitArray;
 import com.google.zxing.common.CharacterSetECI;
 import com.google.zxing.common.ECI;
-import com.google.zxing.common.reedsolomon.GF256;
+import com.google.zxing.common.reedsolomon.GenericGF;
 import com.google.zxing.common.reedsolomon.ReedSolomonEncoder;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.google.zxing.qrcode.decoder.Mode;
@@ -281,7 +281,7 @@ public final class Encoder {
     // If we have more space, we'll fill the space with padding patterns defined in 8.4.9 (p.24).
     int numPaddingBytes = numDataBytes - bits.getSizeInBytes();
     for (int i = 0; i < numPaddingBytes; ++i) {
-      bits.appendBits(((i & 0x01) == 0) ? 0xEC : 0x11, 8);
+      bits.appendBits((i & 0x01) == 0 ? 0xEC : 0x11, 8);
     }
     if (bits.getSize() != capacity) {
       throw new WriterException("Bits size does not equal capacity");
@@ -414,7 +414,7 @@ public final class Encoder {
     for (int i = 0; i < numDataBytes; i++) {
       toEncode[i] = dataBytes[i] & 0xFF;
     }
-    new ReedSolomonEncoder(GF256.QR_CODE_FIELD).encode(toEncode, numEcBytesInBlock);
+    new ReedSolomonEncoder(GenericGF.QR_CODE_FIELD_256).encode(toEncode, numEcBytesInBlock);
 
     byte[] ecBytes = new byte[numEcBytesInBlock];
     for (int i = 0; i < numEcBytesInBlock; i++) {

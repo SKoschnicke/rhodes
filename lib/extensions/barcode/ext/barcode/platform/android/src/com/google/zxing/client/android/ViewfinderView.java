@@ -19,8 +19,6 @@ package com.google.zxing.client.android;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.client.android.camera.CameraManager;
 
-import com.rhomobile.rhodes.R;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -30,8 +28,8 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This view is overlaid on top of the camera preview. It adds the viewfinder rectangle and partial
@@ -42,8 +40,9 @@ import java.util.HashSet;
 public final class ViewfinderView extends View {
 
   private static final int[] SCANNER_ALPHA = {0, 64, 128, 192, 255, 192, 128, 64};
-  private static final long ANIMATION_DELAY = 100L;
-  private static final int OPAQUE = 0xFF;
+  private static final long ANIMATION_DELAY = 80L;
+  private static final int CURRENT_POINT_OPACITY = 0xA0;
+  private static final int MAX_RESULT_POINTS = 20;
 
   private final Paint paint;
   private Bitmap resultBitmap;
@@ -53,8 +52,8 @@ public final class ViewfinderView extends View {
   private final int laserColor;
   private final int resultPointColor;
   private int scannerAlpha;
-  private Collection<ResultPoint> possibleResultPoints;
-  private Collection<ResultPoint> lastPossibleResultPoints;
+  private List<ResultPoint> possibleResultPoints;
+  private List<ResultPoint> lastPossibleResultPoints;
 
   // This constructor is used when the class is built from an XML resource.
   public ViewfinderView(Context context, AttributeSet attrs) {
@@ -69,7 +68,8 @@ public final class ViewfinderView extends View {
     laserColor = resources.getColor(R.color.viewfinder_laser);
     resultPointColor = resources.getColor(R.color.possible_result_points);
     scannerAlpha = 0;
-    possibleResultPoints = new HashSet<ResultPoint>(5);
+    possibleResultPoints = new ArrayList<ResultPoint>(5);
+    lastPossibleResultPoints = null;
   }
 
   @Override
@@ -90,8 +90,8 @@ public final class ViewfinderView extends View {
 
     if (resultBitmap != null) {
       // Draw the opaque result bitmap over the scanning rectangle
-      paint.setAlpha(OPAQUE);
-      canvas.drawBitmap(resultBitmap, frame.left, frame.top, paint);
+      paint.setAlpha(CURRENT_POINT_OPACITY);
+      canvas.drawBitmap(resultBitmap, null, frame, paint);
     } else {
 
       // Draw a two pixel solid black border inside the framing rect
@@ -107,25 +107,37 @@ public final class ViewfinderView extends View {
       scannerAlpha = (scannerAlpha + 1) % SCANNER_ALPHA.length;
       int middle = frame.height() / 2 + frame.top;
       canvas.drawRect(frame.left + 2, middle - 1, frame.right - 1, middle + 2, paint);
+      
+      Rect previewFrame = CameraManager.get().getFramingRectInPreview();
+      float scaleX = frame.width() / (float) previewFrame.width();
+      float scaleY = frame.height() / (float) previewFrame.height();
 
-      Collection<ResultPoint> currentPossible = possibleResultPoints;
-      Collection<ResultPoint> currentLast = lastPossibleResultPoints;
+      List<ResultPoint> currentPossible = possibleResultPoints;
+      List<ResultPoint> currentLast = lastPossibleResultPoints;
       if (currentPossible.isEmpty()) {
         lastPossibleResultPoints = null;
       } else {
-        possibleResultPoints = new HashSet<ResultPoint>(5);
+        possibleResultPoints = new ArrayList<ResultPoint>(5);
         lastPossibleResultPoints = currentPossible;
-        paint.setAlpha(OPAQUE);
+        paint.setAlpha(CURRENT_POINT_OPACITY);
         paint.setColor(resultPointColor);
-        for (ResultPoint point : currentPossible) {
-          canvas.drawCircle(frame.left + point.getX(), frame.top + point.getY(), 6.0f, paint);
+        synchronized (currentPossible) {
+          for (ResultPoint point : currentPossible) {
+            canvas.drawCircle(frame.left + (int) (point.getX() * scaleX),
+                              frame.top + (int) (point.getY() * scaleY),
+                              6.0f, paint);
+          }
         }
       }
       if (currentLast != null) {
-        paint.setAlpha(OPAQUE / 2);
+        paint.setAlpha(CURRENT_POINT_OPACITY / 2);
         paint.setColor(resultPointColor);
-        for (ResultPoint point : currentLast) {
-          canvas.drawCircle(frame.left + point.getX(), frame.top + point.getY(), 3.0f, paint);
+        synchronized (currentLast) {
+          for (ResultPoint point : currentLast) {
+            canvas.drawCircle(frame.left + (int) (point.getX() * scaleX),
+                              frame.top + (int) (point.getY() * scaleY),
+                              3.0f, paint);
+          }
         }
       }
 
@@ -151,7 +163,15 @@ public final class ViewfinderView extends View {
   }
 
   public void addPossibleResultPoint(ResultPoint point) {
-    possibleResultPoints.add(point);
+    List<ResultPoint> points = possibleResultPoints;
+    synchronized (point) {
+      points.add(point);
+      int size = points.size();
+      if (size > MAX_RESULT_POINTS) {
+        // trim it
+        points.subList(0, size - MAX_RESULT_POINTS / 2).clear();
+      }
+    }
   }
 
 }

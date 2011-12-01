@@ -28,6 +28,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import com.google.zxing.client.android.PlanarYUVLuminanceSource;
+import com.google.zxing.client.android.PreferencesActivity;
 
 import java.io.IOException;
 
@@ -64,17 +65,18 @@ public final class CameraManager {
   private final Context context;
   private final CameraConfigurationManager configManager;
   private Camera camera;
-  private int mCameraIndex = 0;
   private Rect framingRect;
   private Rect framingRectInPreview;
   private boolean initialized;
   private boolean previewing;
+  private boolean reverseImage;
   private final boolean useOneShotPreviewCallback;
   /**
    * Preview frames are delivered here, which we pass on to the registered handler. Make sure to
    * clear the handler so it will only receive one message.
    */
   private final PreviewCallback previewCallback;
+
   /** Autofocus callbacks arrive here, and are dispatched to the Handler which requested them. */
   private final AutoFocusCallback autoFocusCallback;
 
@@ -83,9 +85,9 @@ public final class CameraManager {
    *
    * @param context The Activity which wants to use the camera.
    */
-  public static void init(Context context, int camera_index) {
+  public static void init(Context context) {
     if (cameraManager == null) {
-      cameraManager = new CameraManager(context, camera_index);
+      cameraManager = new CameraManager(context);
     }
   }
 
@@ -98,9 +100,8 @@ public final class CameraManager {
     return cameraManager;
   }
 
-  private CameraManager(Context context, int camera_index) {
+  private CameraManager(Context context) {
 
-	this.mCameraIndex = camera_index;
     this.context = context;
     this.configManager = new CameraConfigurationManager(context);
 
@@ -108,7 +109,6 @@ public final class CameraManager {
     // Camera.setPreviewCallback() on 1.5 and earlier. For Donut and later, we need to use
     // the more efficient one shot callback, as the older one can swamp the system and cause it
     // to run out of memory. We can't use SDK_INT because it was introduced in the Donut SDK.
-    //useOneShotPreviewCallback = Integer.parseInt(Build.VERSION.SDK) > Build.VERSION_CODES.CUPCAKE;
     useOneShotPreviewCallback = Integer.parseInt(Build.VERSION.SDK) > 3; // 3 = Cupcake
 
     previewCallback = new PreviewCallback(configManager, useOneShotPreviewCallback);
@@ -123,27 +123,22 @@ public final class CameraManager {
    */
   public void openDriver(SurfaceHolder holder) throws IOException {
     if (camera == null) {
-      if (mCameraIndex == 0) {	
-    	  camera = Camera.open();
-      }
-      else {
-    	  camera = com.rhomobile.rhodes.camera.Camera.getCameraService().getFrontCamera();  
-      }
+      camera = Camera.open();
       if (camera == null) {
         throw new IOException();
       }
-      camera.setPreviewDisplay(holder);
+    }
+    camera.setPreviewDisplay(holder);
+    if (!initialized) {
+      initialized = true;
+      configManager.initFromCameraParameters(camera);
+    }
+    configManager.setDesiredCameraParameters(camera);
 
-      if (!initialized) {
-        initialized = true;
-        configManager.initFromCameraParameters(camera);
-      }
-      configManager.setDesiredCameraParameters(camera);
-
-      SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-      //if (prefs.getBoolean(PreferencesActivity.KEY_FRONT_LIGHT, false)) {
-      //  FlashlightManager.enableFlashlight();
-      // }
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    reverseImage = prefs.getBoolean(PreferencesActivity.KEY_REVERSE_IMAGE, false);
+    if (prefs.getBoolean(PreferencesActivity.KEY_FRONT_LIGHT, false)) {
+      FlashlightManager.enableFlashlight();
     }
   }
 
@@ -155,6 +150,11 @@ public final class CameraManager {
       FlashlightManager.disableFlashlight();
       camera.release();
       camera = null;
+
+      // Make sure to clear these each time we close the camera, so that any scanning rect
+      // requested by intent is forgotten.
+      framingRect = null;
+      framingRectInPreview = null;
     }
   }
 
@@ -224,11 +224,11 @@ public final class CameraManager {
    * @return The rectangle to draw on screen in window coordinates.
    */
   public Rect getFramingRect() {
-    Point screenResolution = configManager.getScreenResolution();
     if (framingRect == null) {
       if (camera == null) {
         return null;
       }
+      Point screenResolution = configManager.getScreenResolution();
       int width = screenResolution.x * 3 / 4;
       if (width < MIN_FRAME_WIDTH) {
         width = MIN_FRAME_WIDTH;
@@ -268,25 +268,26 @@ public final class CameraManager {
   }
 
   /**
-   * Converts the result points from still resolution coordinates to screen coordinates.
+   * Allows third party apps to specify the scanning rectangle dimensions, rather than determine
+   * them automatically based on screen resolution.
    *
-   * @param points The points returned by the Reader subclass through Result.getResultPoints().
-   * @return An array of Points scaled to the size of the framing rect and offset appropriately
-   *         so they can be drawn in screen coordinates.
+   * @param width The width in pixels to scan.
+   * @param height The height in pixels to scan.
    */
-  /*
-  public Point[] convertResultPoints(ResultPoint[] points) {
-    Rect frame = getFramingRectInPreview();
-    int count = points.length;
-    Point[] output = new Point[count];
-    for (int x = 0; x < count; x++) {
-      output[x] = new Point();
-      output[x].x = frame.left + (int) (points[x].getX() + 0.5f);
-      output[x].y = frame.top + (int) (points[x].getY() + 0.5f);
+  public void setManualFramingRect(int width, int height) {
+    Point screenResolution = configManager.getScreenResolution();
+    if (width > screenResolution.x) {
+      width = screenResolution.x;
     }
-    return output;
+    if (height > screenResolution.y) {
+      height = screenResolution.y;
+    }
+    int leftOffset = (screenResolution.x - width) / 2;
+    int topOffset = (screenResolution.y - height) / 2;
+    framingRect = new Rect(leftOffset, topOffset, leftOffset + width, topOffset + height);
+    Log.d(TAG, "Calculated manual framing rect: " + framingRect);
+    framingRectInPreview = null;
   }
-   */
 
   /**
    * A factory method to build the appropriate LuminanceSource object based on the format
@@ -301,6 +302,7 @@ public final class CameraManager {
     Rect rect = getFramingRectInPreview();
     int previewFormat = configManager.getPreviewFormat();
     String previewFormatString = configManager.getPreviewFormatString();
+
     switch (previewFormat) {
       // This is the standard Android format which all devices are REQUIRED to support.
       // In theory, it's the only one we should ever care about.
@@ -309,13 +311,13 @@ public final class CameraManager {
       // about the Y channel, so allow it.
       case PixelFormat.YCbCr_422_SP:
         return new PlanarYUVLuminanceSource(data, width, height, rect.left, rect.top,
-            rect.width(), rect.height());
+            rect.width(), rect.height(), reverseImage);
       default:
         // The Samsung Moment incorrectly uses this variant instead of the 'sp' version.
         // Fortunately, it too has all the Y data up front, so we can read it.
         if ("yuv420p".equals(previewFormatString)) {
           return new PlanarYUVLuminanceSource(data, width, height, rect.left, rect.top,
-            rect.width(), rect.height());
+              rect.width(), rect.height(), reverseImage);
         }
     }
     throw new IllegalArgumentException("Unsupported picture format: " +

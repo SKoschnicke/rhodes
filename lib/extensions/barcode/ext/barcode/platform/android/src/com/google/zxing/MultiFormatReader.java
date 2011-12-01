@@ -16,6 +16,7 @@
 
 package com.google.zxing;
 
+import com.google.zxing.aztec.AztecReader;
 import com.google.zxing.datamatrix.DataMatrixReader;
 import com.google.zxing.oned.MultiFormatOneDReader;
 import com.google.zxing.pdf417.PDF417Reader;
@@ -104,7 +105,7 @@ public final class MultiFormatReader implements Reader {
               formats.contains(BarcodeFormat.CODE_93) ||
               formats.contains(BarcodeFormat.CODE_128) ||
               formats.contains(BarcodeFormat.ITF) ||
-              formats.contains(BarcodeFormat.RSS14) ||
+              formats.contains(BarcodeFormat.RSS_14) ||
               formats.contains(BarcodeFormat.RSS_EXPANDED);
       // Put 1D readers upfront in "normal" mode
       if (addOneDReader && !tryHarder) {
@@ -116,7 +117,10 @@ public final class MultiFormatReader implements Reader {
       if (formats.contains(BarcodeFormat.DATA_MATRIX)) {
         readers.addElement(new DataMatrixReader());
       }
-      if (formats.contains(BarcodeFormat.PDF417)) {
+      if (formats.contains(BarcodeFormat.AZTEC)) {
+        readers.addElement(new AztecReader());
+      }
+      if (formats.contains(BarcodeFormat.PDF_417)) {
          readers.addElement(new PDF417Reader());
        }
       // At end in "try harder" mode
@@ -128,12 +132,11 @@ public final class MultiFormatReader implements Reader {
       if (!tryHarder) {
         readers.addElement(new MultiFormatOneDReader(hints));
       }
+
       readers.addElement(new QRCodeReader());
-
       readers.addElement(new DataMatrixReader());
-
-      // TODO: Enable once PDF417 has passed QA
-      //readers.addElement(new PDF417Reader());
+      readers.addElement(new AztecReader());
+      readers.addElement(new PDF417Reader());
 
       if (tryHarder) {
         readers.addElement(new MultiFormatOneDReader(hints));

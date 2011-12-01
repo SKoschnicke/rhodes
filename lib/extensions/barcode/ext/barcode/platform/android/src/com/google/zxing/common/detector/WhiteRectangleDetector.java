@@ -32,17 +32,48 @@ import com.google.zxing.common.BitMatrix;
  */
 public final class WhiteRectangleDetector {
 
-  private static final int INIT_SIZE = 40;
+  private static final int INIT_SIZE = 30;
   private static final int CORR = 1;
 
   private final BitMatrix image;
   private final int height;
   private final int width;
+  private final int leftInit;
+  private final int rightInit;
+  private final int downInit;
+  private final int upInit;
 
-  public WhiteRectangleDetector(BitMatrix image) {
+  /**
+   * @throws NotFoundException if image is too small
+   */
+  public WhiteRectangleDetector(BitMatrix image) throws NotFoundException {
     this.image = image;
     height = image.getHeight();
     width = image.getWidth();
+    leftInit = (width - INIT_SIZE) >> 1;
+    rightInit = (width + INIT_SIZE) >> 1;
+    upInit = (height - INIT_SIZE) >> 1;
+    downInit = (height + INIT_SIZE) >> 1;
+    if (upInit < 0 || leftInit < 0 || downInit >= height || rightInit >= width) {
+      throw NotFoundException.getNotFoundInstance();
+    }
+  }
+
+  /**
+   * @throws NotFoundException if image is too small
+   */
+  public WhiteRectangleDetector(BitMatrix image, int initSize, int x, int y) throws NotFoundException {
+    this.image = image;
+    height = image.getHeight();
+    width = image.getWidth();
+    int halfsize = initSize >> 1;
+    leftInit = x - halfsize;
+    rightInit = x + halfsize;
+    upInit = y - halfsize;
+    downInit = y + halfsize;
+    if (upInit < 0 || leftInit < 0 || downInit >= height || rightInit >= width) {
+      throw NotFoundException.getNotFoundInstance();
+    }
   }
 
   /**
@@ -52,7 +83,7 @@ public final class WhiteRectangleDetector {
    * region until it finds a white rectangular region.
    * </p>
    *
-   * @return {@link ResultPoint}[] describing the corners of the rectangular
+   * @return {@link ResultPoint[]} describing the corners of the rectangular
    *         region. The first and last points are opposed on the diagonal, as
    *         are the second and third. The first point will be the topmost
    *         point and the last, the bottommost. The second point will be
@@ -61,10 +92,10 @@ public final class WhiteRectangleDetector {
    */
   public ResultPoint[] detect() throws NotFoundException {
 
-    int left = (width - INIT_SIZE) >> 1;
-    int right = (width + INIT_SIZE) >> 1;
-    int up = (height - INIT_SIZE) >> 1;
-    int down = (height + INIT_SIZE) >> 1;
+    int left = leftInit;
+    int right = rightInit;
+    int up = upInit;
+    int down = downInit;
     boolean sizeExceeded = false;
     boolean aBlackPointFoundOnBorder = true;
     boolean atLeastOneBlackPointFoundOnBorder = false;

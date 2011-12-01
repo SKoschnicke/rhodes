@@ -35,6 +35,8 @@ public final class Mode {
   public static final Mode KANJI = new Mode(new int[]{8, 10, 12}, 0x08, "KANJI");
   public static final Mode FNC1_FIRST_POSITION = new Mode(null, 0x05, "FNC1_FIRST_POSITION");
   public static final Mode FNC1_SECOND_POSITION = new Mode(null, 0x09, "FNC1_SECOND_POSITION");
+  /** See GBT 18284-2000; "Hanzi" is a transliteration of this mode name. */
+  public static final Mode HANZI = new Mode(new int[]{8, 10, 12}, 0x0D, "HANZI");
 
   private final int[] characterCountBitsForVersions;
   private final int bits;
@@ -48,7 +50,7 @@ public final class Mode {
 
   /**
    * @param bits four bits encoding a QR Code data mode
-   * @return {@link Mode} encoded by these bits
+   * @return Mode encoded by these bits
    * @throws IllegalArgumentException if bits do not correspond to a known mode
    */
   public static Mode forBits(int bits) {
@@ -71,6 +73,9 @@ public final class Mode {
         return KANJI;
       case 0x9:
         return FNC1_SECOND_POSITION;
+      case 0xD:
+    	  // 0xD is defined in GBT 18284-2000, may not be supported in foreign country
+        return HANZI;
       default:
         throw new IllegalArgumentException();
     }
@@ -79,7 +84,7 @@ public final class Mode {
   /**
    * @param version version in question
    * @return number of bits used, in this QR Code symbol {@link Version}, to encode the
-   *         count of characters that will follow encoded in this {@link Mode}
+   *         count of characters that will follow encoded in this Mode
    */
   public int getCharacterCountBits(Version version) {
     if (characterCountBitsForVersions == null) {

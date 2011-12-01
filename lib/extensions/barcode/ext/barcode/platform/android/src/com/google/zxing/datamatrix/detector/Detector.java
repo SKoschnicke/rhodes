@@ -46,7 +46,7 @@ public final class Detector {
   private final BitMatrix image;
   private final WhiteRectangleDetector rectangleDetector;
 
-  public Detector(BitMatrix image) {
+  public Detector(BitMatrix image) throws NotFoundException {
     this.image = image;
     rectangleDetector = new WhiteRectangleDetector(image);
   }
@@ -141,50 +141,98 @@ public final class Detector {
     // The top right point is actually the corner of a module, which is one of the two black modules
     // adjacent to the white module at the top right. Tracing to that corner from either the top left
     // or bottom right should work here.
-    int dimension = Math.min(transitionsBetween(topLeft, topRight).getTransitions(),
-                             transitionsBetween(bottomRight, topRight).getTransitions());
-    if ((dimension & 0x01) == 1) {
+    
+    int dimensionTop = transitionsBetween(topLeft, topRight).getTransitions();
+    int dimensionRight = transitionsBetween(bottomRight, topRight).getTransitions();
+    
+    if ((dimensionTop & 0x01) == 1) {
       // it can't be odd, so, round... up?
-      dimension++;
+      dimensionTop++;
     }
-    dimension += 2;
-
-    //correct top right point to match the white module
-    ResultPoint correctedTopRight = correctTopRight(bottomLeft, bottomRight, topLeft, topRight, dimension);
-    if (correctedTopRight == null){
-    	correctedTopRight = topRight;
+    dimensionTop += 2;
+    
+    if ((dimensionRight & 0x01) == 1) {
+      // it can't be odd, so, round... up?
+      dimensionRight++;
     }
+    dimensionRight += 2;
 
-    //We redetermine the dimension using the corrected top right point
-    int dimension2 = Math.max(transitionsBetween(topLeft, correctedTopRight).getTransitions(),
-                              transitionsBetween(bottomRight, correctedTopRight).getTransitions());
-    dimension2++;
-    if ((dimension2 & 0x01) == 1) {
-      dimension2++;
+    BitMatrix bits;
+    ResultPoint correctedTopRight;
+
+    // Rectanguar symbols are 6x16, 6x28, 10x24, 10x32, 14x32, or 14x44. If one dimension is more
+    // than twice the other, it's certainly rectangular, but to cut a bit more slack we accept it as
+    // rectangular if the bigger side is at least 7/4 times the other:
+    if (4 * dimensionTop >= 7 * dimensionRight || 4 * dimensionRight >= 7 * dimensionTop) {
+    	// The matrix is rectangular
+    	
+      correctedTopRight =
+          correctTopRightRectangular(bottomLeft, bottomRight, topLeft, topRight, dimensionTop, dimensionRight);
+      if (correctedTopRight == null){
+        correctedTopRight = topRight;
+      }
+
+      dimensionTop = transitionsBetween(topLeft, correctedTopRight).getTransitions();
+      dimensionRight = transitionsBetween(bottomRight, correctedTopRight).getTransitions();
+
+      if ((dimensionTop & 0x01) == 1) {
+        // it can't be odd, so, round... up?
+        dimensionTop++;
+      }
+
+      if ((dimensionRight & 0x01) == 1) {
+        // it can't be odd, so, round... up?
+        dimensionRight++;
+      }
+
+      bits = sampleGrid(image, topLeft, bottomLeft, bottomRight, correctedTopRight, dimensionTop, dimensionRight);
+          
+    } else {
+    	// The matrix is square
+        
+    	int dimension = Math.min(dimensionRight, dimensionTop);
+      // correct top right point to match the white module
+      correctedTopRight = correctTopRight(bottomLeft, bottomRight, topLeft, topRight, dimension);
+      if (correctedTopRight == null){
+        correctedTopRight = topRight;
+      }
+
+      // Redetermine the dimension using the corrected top right point
+      int dimensionCorrected = Math.max(transitionsBetween(topLeft, correctedTopRight).getTransitions(),
+                                transitionsBetween(bottomRight, correctedTopRight).getTransitions());
+      dimensionCorrected++;
+      if ((dimensionCorrected & 0x01) == 1) {
+        dimensionCorrected++;
+      }
+
+      bits = sampleGrid(image,
+                        topLeft,
+                        bottomLeft,
+                        bottomRight,
+                        correctedTopRight,
+                        dimensionCorrected,
+                        dimensionCorrected);
     }
-
-    BitMatrix bits = sampleGrid(image, topLeft, bottomLeft, bottomRight, correctedTopRight, dimension2);
 
     return new DetectorResult(bits, new ResultPoint[]{topLeft, bottomLeft, bottomRight, correctedTopRight});
   }
 
   /**
    * Calculates the position of the white top right module using the output of the rectangle detector
+   * for a rectangular matrix
    */
-  private ResultPoint correctTopRight(ResultPoint bottomLeft,
-                                      ResultPoint bottomRight,
-                                      ResultPoint topLeft,
-                                      ResultPoint topRight,
-                                      int dimension) {
-		
-		float corr = distance(bottomLeft, bottomRight) / (float)dimension;
+  private ResultPoint correctTopRightRectangular(ResultPoint bottomLeft,
+		ResultPoint bottomRight, ResultPoint topLeft, ResultPoint topRight,
+		int dimensionTop, int dimensionRight) {
+	  
+		float corr = distance(bottomLeft, bottomRight) / (float)dimensionTop;
 		int norm = distance(topLeft, topRight);
 		float cos = (topRight.getX() - topLeft.getX()) / norm;
 		float sin = (topRight.getY() - topLeft.getY()) / norm;
 		
 		ResultPoint c1 = new ResultPoint(topRight.getX()+corr*cos, topRight.getY()+corr*sin);
 	
-		corr = distance(bottomLeft, bottomRight) / (float)dimension;
+		corr = distance(bottomLeft, topLeft) / (float)dimensionRight;
 		norm = distance(bottomRight, topRight);
 		cos = (topRight.getX() - bottomRight.getX()) / norm;
 		sin = (topRight.getY() - bottomRight.getY()) / norm;
@@ -200,8 +248,10 @@ public final class Detector {
 			return c1;
 		}
 		
-		int l1 = Math.abs(transitionsBetween(topLeft, c1).getTransitions() - transitionsBetween(bottomRight, c1).getTransitions());
-		int l2 = Math.abs(transitionsBetween(topLeft, c2).getTransitions() - transitionsBetween(bottomRight, c2).getTransitions());
+		int l1 = Math.abs(dimensionTop - transitionsBetween(topLeft, c1).getTransitions()) + 
+					Math.abs(dimensionRight - transitionsBetween(bottomRight, c1).getTransitions());
+		int l2 = Math.abs(dimensionTop - transitionsBetween(topLeft, c2).getTransitions()) + 
+		Math.abs(dimensionRight - transitionsBetween(bottomRight, c2).getTransitions());
 		
 		if (l1 <= l2){
 			return c1;
@@ -210,8 +260,49 @@ public final class Detector {
 		return c2;
   }
 
+  /**
+   * Calculates the position of the white top right module using the output of the rectangle detector
+   * for a square matrix
+   */
+  private ResultPoint correctTopRight(ResultPoint bottomLeft,
+                                      ResultPoint bottomRight,
+                                      ResultPoint topLeft,
+                                      ResultPoint topRight,
+                                      int dimension) {
+		
+		float corr = distance(bottomLeft, bottomRight) / (float) dimension;
+		int norm = distance(topLeft, topRight);
+		float cos = (topRight.getX() - topLeft.getX()) / norm;
+		float sin = (topRight.getY() - topLeft.getY()) / norm;
+		
+		ResultPoint c1 = new ResultPoint(topRight.getX() + corr * cos, topRight.getY() + corr * sin);
+	
+		corr = distance(bottomLeft, bottomRight) / (float) dimension;
+		norm = distance(bottomRight, topRight);
+		cos = (topRight.getX() - bottomRight.getX()) / norm;
+		sin = (topRight.getY() - bottomRight.getY()) / norm;
+		
+		ResultPoint c2 = new ResultPoint(topRight.getX() + corr * cos, topRight.getY() + corr * sin);
+
+		if (!isValid(c1)) {
+			if (isValid(c2)) {
+				return c2;
+			}
+			return null;
+		} else if (!isValid(c2)) {
+			return c1;
+		}
+		
+		int l1 = Math.abs(transitionsBetween(topLeft, c1).getTransitions() -
+                      transitionsBetween(bottomRight, c1).getTransitions());
+		int l2 = Math.abs(transitionsBetween(topLeft, c2).getTransitions() -
+                      transitionsBetween(bottomRight, c2).getTransitions());
+
+    return l1 <= l2 ? c1 : c2;
+  }
+
   private boolean isValid(ResultPoint p) {
-	  return (p.getX() >= 0 && p.getX() < image.width && p.getY() > 0 && p.getY() < image.height);
+	  return p.getX() >= 0 && p.getX() < image.width && p.getY() > 0 && p.getY() < image.height;
   }
 
   /**
@@ -242,20 +333,22 @@ public final class Detector {
                                       ResultPoint bottomLeft,
                                       ResultPoint bottomRight,
                                       ResultPoint topRight,
-                                      int dimension) throws NotFoundException {
+                                      int dimensionX,
+                                      int dimensionY) throws NotFoundException {
 
     GridSampler sampler = GridSampler.getInstance();
 
     return sampler.sampleGrid(image,
-                              dimension,
+                              dimensionX,
+                              dimensionY,
                               0.5f,
                               0.5f,
-                              dimension - 0.5f,
+                              dimensionX - 0.5f,
                               0.5f,
-                              dimension - 0.5f,
-                              dimension - 0.5f,
+                              dimensionX - 0.5f,
+                              dimensionY - 0.5f,
                               0.5f,
-                              dimension - 0.5f,
+                              dimensionY - 0.5f,
                               topLeft.getX(),
                               topLeft.getY(),
                               topRight.getX(),

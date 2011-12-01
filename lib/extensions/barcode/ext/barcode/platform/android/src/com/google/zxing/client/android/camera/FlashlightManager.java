@@ -28,20 +28,17 @@ import java.lang.reflect.Method;
  * but, classes which allow access to this function still exist on some devices.
  * This therefore proceeds through a great deal of reflection.
  *
- * See <a href="http://almondmendoza.com/2009/01/05/changing-the-screen-brightness-programatically/">
- * http://almondmendoza.com/2009/01/05/changing-the-screen-brightness-programatically/</a> and
- * <a href="http://code.google.com/p/droidled/source/browse/trunk/src/com/droidled/demo/DroidLED.java">
- * http://code.google.com/p/droidled/source/browse/trunk/src/com/droidled/demo/DroidLED.java</a>.
+ * See http://almondmendoza.com/2009/01/05/changing-the-screen-brightness-programatically/ and
+ * http://code.google.com/p/droidled/source/browse/trunk/src/com/droidled/demo/DroidLED.java .
  * Thanks to Ryan Alford for pointing out the availability of this class.
  */
 final class FlashlightManager {
 
   private static final String TAG = FlashlightManager.class.getSimpleName();
 
-  private static final Object iHardwareService = null;
-  private static final Method setFlashEnabledMethod = null;
-  /*
-   static {
+  private static final Object iHardwareService;
+  private static final Method setFlashEnabledMethod;
+  static {
     iHardwareService = getHardwareService();
     setFlashEnabledMethod = getSetFlashEnabledMethod(iHardwareService);
     if (iHardwareService == null) {
@@ -50,7 +47,6 @@ final class FlashlightManager {
       Log.v(TAG, "This device does not support control of a flashlight");
     }
   }
-  */
 
   private FlashlightManager() {
   }
@@ -76,7 +72,8 @@ final class FlashlightManager {
       return null;
     }
 
-    Method asInterfaceMethod = maybeGetMethod(iHardwareServiceStubClass, "asInterface", IBinder.class);
+    Method asInterfaceMethod = maybeGetMethod(iHardwareServiceStubClass, "asInterface",
+        IBinder.class);
     if (asInterfaceMethod == null) {
       return null;
     }
@@ -132,17 +129,17 @@ final class FlashlightManager {
   }
 
   static void enableFlashlight() {
-    //setFlashlight(true);
+    setFlashlight(true);
   }
 
   static void disableFlashlight() {
-    //setFlashlight(false);
+    setFlashlight(false);
   }
 
   private static void setFlashlight(boolean active) {
-    //if (iHardwareService != null) {
-    //  invoke(setFlashEnabledMethod, iHardwareService, active);
-    //}
+    if (iHardwareService != null) {
+      invoke(setFlashEnabledMethod, iHardwareService, active);
+    }
   }
 
 }

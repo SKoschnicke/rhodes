@@ -41,7 +41,7 @@ public final class CodaBarReader extends OneDReader {
    */
   private static final int[] CHARACTER_ENCODINGS = {
       0x003, 0x006, 0x009, 0x060, 0x012, 0x042, 0x021, 0x024, 0x030, 0x048, // 0-9
-      0x00c, 0x018, 0x025, 0x051, 0x054, 0x015, 0x01A, 0x029, 0x00B, 0x00E, // -$:/.+ABCD
+      0x00c, 0x018, 0x045, 0x051, 0x054, 0x015, 0x01A, 0x029, 0x00B, 0x00E, // -$:/.+ABCD
       0x01A, 0x029 //TN
   };
 
@@ -105,7 +105,7 @@ public final class CodaBarReader extends OneDReader {
     int whiteSpaceAfterEnd = nextStart - lastStart - lastPatternSize;
     // If 50% of last pattern size, following last pattern, is not whitespace, fail
     // (but if it's whitespace to the very end of the image, that's OK)
-    if ((nextStart) != end && (whiteSpaceAfterEnd / 2 < lastPatternSize)) {
+    if (nextStart != end && (whiteSpaceAfterEnd / 2 < lastPatternSize)) {
       throw NotFoundException.getNotFoundInstance();
     }
 

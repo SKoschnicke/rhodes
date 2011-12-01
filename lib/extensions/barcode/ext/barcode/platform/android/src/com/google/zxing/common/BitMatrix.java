@@ -32,8 +32,7 @@ package com.google.zxing.common;
  * @author dswitkin@google.com (Daniel Switkin)
  */
 public final class BitMatrix {
-
-  // TODO: Just like BitArray, these need to be public so ProGuard can inline them.
+  // Just like BitArray, these need to be public so ProGuard can inline them.
   public final int width;
   public final int height;
   public final int rowSize;
@@ -147,7 +146,7 @@ public final class BitMatrix {
 
   /**
    * This is useful in detecting a corner of a 'pure' barcode.
-   * 
+   *
    * @return {x,y} coordinate of top-left-most 1 bit, or null if it is all white
    */
   public int[] getTopLeftOnBit() {
@@ -160,13 +159,35 @@ public final class BitMatrix {
     }
     int y = bitsOffset / rowSize;
     int x = (bitsOffset % rowSize) << 5;
-    
+
     int theBits = bits[bitsOffset];
     int bit = 0;
     while ((theBits << (31-bit)) == 0) {
       bit++;
     }
     x += bit;
+    return new int[] {x, y};
+  }
+
+  public int[] getBottomRightOnBit() {
+    int bitsOffset = bits.length - 1;
+    while (bitsOffset >= 0 && bits[bitsOffset] == 0) {
+      bitsOffset--;
+    }
+    if (bitsOffset < 0) {
+      return null;
+    }
+
+    int y = bitsOffset / rowSize;
+    int x = (bitsOffset % rowSize) << 5;
+
+    int theBits = bits[bitsOffset];
+    int bit = 31;
+    while ((theBits >>> bit) == 0) {
+      bit--;
+    }
+    x += bit;
+
     return new int[] {x, y};
   }
 

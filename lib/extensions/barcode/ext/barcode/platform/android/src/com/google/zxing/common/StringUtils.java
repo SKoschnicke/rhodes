@@ -30,6 +30,7 @@ public final class StringUtils {
   private static final String PLATFORM_DEFAULT_ENCODING =
       System.getProperty("file.encoding");
   public static final String SHIFT_JIS = "SJIS";
+  public static final String GB2312 = "GB2312";
   private static final String EUC_JP = "EUC_JP";
   private static final String UTF8 = "UTF8";
   private static final String ISO88591 = "ISO8859_1";
@@ -131,7 +132,7 @@ public final class StringUtils {
           ((value >= 0xF0 && value <= 0xFF) || value == 0x80 || value == 0xA0)) {
         canBeShiftJIS = false;
       }
-      if (((value >= 0x81 && value <= 0x9F) || (value >= 0xE0 && value <= 0xEF))) {
+      if ((value >= 0x81 && value <= 0x9F) || (value >= 0xE0 && value <= 0xEF)) {
         // These start double-byte characters in Shift_JIS. Let's see if it's followed by a valid
         // second byte.
         if (lastWasPossibleDoubleByteStart) {

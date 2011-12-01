@@ -24,8 +24,6 @@ import com.google.zxing.Result;
 import com.google.zxing.client.android.camera.CameraManager;
 import com.google.zxing.common.HybridBinarizer;
 
-import com.rhomobile.rhodes.R;
-
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -40,6 +38,7 @@ final class DecodeHandler extends Handler {
 
   private final CaptureActivity activity;
   private final MultiFormatReader multiFormatReader;
+  private boolean running = true;
 
   DecodeHandler(CaptureActivity activity, Hashtable<DecodeHintType, Object> hints) {
     multiFormatReader = new MultiFormatReader();
@@ -49,12 +48,15 @@ final class DecodeHandler extends Handler {
 
   @Override
   public void handleMessage(Message message) {
+    if (!running) {
+      return;
+    }
     switch (message.what) {
       case R.id.decode:
-        //Log.d(TAG, "Got decode message");
         decode((byte[]) message.obj, message.arg1, message.arg2);
         break;
       case R.id.quit:
+        running = false;
         Looper.myLooper().quit();
         break;
     }
@@ -82,13 +84,13 @@ final class DecodeHandler extends Handler {
     }
 
     if (rawResult != null) {
+      // Don't log the barcode contents for security.
       long end = System.currentTimeMillis();
-      Log.d(TAG, "Found barcode (" + (end - start) + " ms):\n" + rawResult.toString());
+      Log.d(TAG, "Found barcode in " + (end - start) + " ms");
       Message message = Message.obtain(activity.getHandler(), R.id.decode_succeeded, rawResult);
       Bundle bundle = new Bundle();
       bundle.putParcelable(DecodeThread.BARCODE_BITMAP, source.renderCroppedGreyscaleBitmap());
       message.setData(bundle);
-      //Log.d(TAG, "Sending decode succeeded message...");
       message.sendToTarget();
     } else {
       Message message = Message.obtain(activity.getHandler(), R.id.decode_failed);

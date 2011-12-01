@@ -93,7 +93,7 @@ public final class Version {
    *
    * @param numRows Number of rows in modules
    * @param numColumns Number of columns in modules
-   * @return {@link Version} for a Data Matrix Code of those dimensions
+   * @return Version for a Data Matrix Code of those dimensions
    * @throws FormatException if dimensions do correspond to a valid Data Matrix size
    */
   public static Version getVersionForDimensions(int numRows, int numColumns) throws FormatException {
@@ -232,7 +232,7 @@ public final class Version {
             new ECBlocks(14, new ECB(1, 16))),
         new Version(28, 12, 36, 10, 16,
             new ECBlocks(18, new ECB(1, 22))),
-        new Version(29, 16, 36, 10, 16,
+        new Version(29, 16, 36, 14, 16,
             new ECBlocks(24, new ECB(1, 32))),
         new Version(30, 16, 48, 14, 22,
             new ECBlocks(28, new ECB(1, 49)))

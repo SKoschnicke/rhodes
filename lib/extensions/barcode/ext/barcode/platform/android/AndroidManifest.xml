@@ -5,7 +5,7 @@
     android:versionCode="29"
     android:versionName="2.3.3">
 
-  <application >
+  <application>
 
     <activity android:name="com.google.zxing.client.android.CaptureActivity"
               android:screenOrientation="landscape"
@@ -18,7 +18,7 @@
       </intent-filter>
     </activity>
     
-    </application >
+  </application>
 
   <uses-permission android:name="android.permission.CAMERA"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>

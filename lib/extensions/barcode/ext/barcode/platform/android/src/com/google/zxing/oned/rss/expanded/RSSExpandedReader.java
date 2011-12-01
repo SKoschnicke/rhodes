@@ -128,11 +128,11 @@ public final class RSSExpandedReader extends AbstractRSSReader{
       ExpandedPair nextPair = retrieveNextPair(row, this.pairs, rowNumber);
       this.pairs.addElement(nextPair);
 
-      if(nextPair.mayBeLast()){
-        if(checkChecksum()) {
+      if (nextPair.mayBeLast()) {
+        if (checkChecksum()) {
           return this.pairs;
         }
-        if(nextPair.mustBeLast()) {
+        if (nextPair.mustBeLast()) {
           throw NotFoundException.getNotFoundInstance();
         }
       }
@@ -279,7 +279,7 @@ public final class RSSExpandedReader extends AbstractRSSReader{
     } else if (previousPairs.isEmpty()) {
       rowOffset = 0;
     } else{
-      ExpandedPair lastPair = ((ExpandedPair)previousPairs.lastElement());
+      ExpandedPair lastPair = (ExpandedPair) previousPairs.lastElement();
       rowOffset = lastPair.getFinderPattern().getStartEnd()[1];
     }
     boolean searchingEvenPair = previousPairs.size() % 2 != 0;

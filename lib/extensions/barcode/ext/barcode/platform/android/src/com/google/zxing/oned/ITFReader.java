@@ -27,10 +27,14 @@ import com.google.zxing.common.BitArray;
 import java.util.Hashtable;
 
 /**
- * <p>Implements decoding of the ITF format.</p>
+ * <p>Implements decoding of the ITF format, or Interleaved Two of Five.</p>
  *
- * <p>"ITF" stands for Interleaved Two of Five. This Reader will scan ITF barcode with 6, 10 or 14
- * digits. The checksum is optional and is not applied by this Reader. The consumer of the decoded
+ * <p>This Reader will scan ITF barcodes of certain lengths only.
+ * At the moment it reads length 6, 10, 12, 14, 16, 24, and 44 as these have appeared "in the wild". Not all
+ * lengths are scanned, especially shorter ones, to avoid false positives. This in turn is due to a lack of
+ * required checksum function.</p>
+ *
+ * <p>The checksum is optional and is not applied by this Reader. The consumer of the decoded
  * value will have to apply a checksum if required.</p>
  *
  * <p><a href="http://en.wikipedia.org/wiki/Interleaved_2_of_5">http://en.wikipedia.org/wiki/Interleaved_2_of_5</a>
@@ -46,7 +50,7 @@ public final class ITFReader extends OneDReader {
   private static final int W = 3; // Pixel width of a wide line
   private static final int N = 1; // Pixed width of a narrow line
 
-  private static final int[] DEFAULT_ALLOWED_LENGTHS = { 6, 10, 12, 14, 44 };
+  private static final int[] DEFAULT_ALLOWED_LENGTHS = { 6, 8, 10, 12, 14, 16, 20, 24, 44 };
 
   // Stores the actual narrow line width of the image being decoded.
   private int narrowLineWidth = -1;
