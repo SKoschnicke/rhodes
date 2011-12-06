@@ -57,6 +57,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -444,9 +446,14 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     canvas.drawLine(a.getX(), a.getY(), b.getX(), b.getY(), paint);
   }
 
+  private Button mCancelButton = null;
+  private Button mCancelButton2 = null;
+  private Button mRetakeButton = null;
+  private Button mOKButton = null;
+
   // Put up our own UI for how to handle the decoded contents.
   private void handleDecodeInternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) {
-    statusView.setVisibility(View.GONE);
+    //statusView.setVisibility(View.GONE);
     viewfinderView.setVisibility(View.GONE);
     resultView.setVisibility(View.VISIBLE);
 
@@ -458,6 +465,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       barcodeImageView.setImageBitmap(barcode);
     }
 
+    /*
     TextView formatTextView = (TextView) findViewById(R.id.format_text_view);
     formatTextView.setText(rawResult.getBarcodeFormat().toString());
 
@@ -490,6 +498,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         metaTextViewLabel.setVisibility(View.VISIBLE);
       }
     }
+    */
 
     TextView contentsTextView = (TextView) findViewById(R.id.contents_text_view);
     CharSequence displayContents = resultHandler.getDisplayContents();
@@ -498,6 +507,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     int scaledSize = Math.max(22, 32 - displayContents.length() / 4);
     contentsTextView.setTextSize(TypedValue.COMPLEX_UNIT_SP, scaledSize);
 
+    /*
     TextView supplementTextView = (TextView) findViewById(R.id.contents_supplement_text_view);
     supplementTextView.setText("");
     supplementTextView.setOnClickListener(null);
@@ -506,7 +516,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       SupplementalInfoRetriever.maybeInvokeRetrieval(supplementTextView, resultHandler.getResult(),
           handler, this);
     }
+    */
 
+    /*
     int buttonCount = resultHandler.getButtonCount();
     ViewGroup buttonView = (ViewGroup) findViewById(R.id.result_button_view);
     buttonView.requestFocus();
@@ -520,11 +532,59 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         button.setVisibility(View.GONE);
       }
     }
+    */
+
+    mCancelButton2 = (Button)findViewById(R.id.cancel_button_a);
+    mCancelButton = (Button)findViewById(R.id.cancel_button);
+    mRetakeButton = (Button)findViewById(R.id.retake_button);
+    mOKButton = (Button)findViewById(R.id.ok_button);
+
+    mCancelButton2.setOnClickListener( new OnClickListener() {
+      public void onClick(View v) {
+        onCancel();
+      }});
+    mCancelButton2.setVisibility(View.VISIBLE);
+    mCancelButton.setOnClickListener( new OnClickListener() {
+      public void onClick(View v) {
+        onCancel();
+      }});
+    mCancelButton.setVisibility(View.VISIBLE);
+    mRetakeButton.setOnClickListener( new OnClickListener() {
+      public void onClick(View v) {
+        onRetake();
+      }});
+    mRetakeButton.setVisibility(View.VISIBLE);
+    mOKButton.setOnClickListener( new OnClickListener() {
+      public void onClick(View v) {
+        onOK();
+      }});
+    mOKButton.setVisibility(View.VISIBLE);
 
     if (copyToClipboard && !resultHandler.areContentsSecure()) {
       ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
       clipboard.setText(displayContents);
     }
+  }
+
+  public void onCancel() {
+    finish();
+    com.rhomobile.barcode.Barcode.callCancelCallback();
+  }
+
+  public void onRetake() {
+    resetStatusView();
+    if (handler != null) {
+      handler.sendEmptyMessage(R.id.restart_preview);
+    }
+  }
+
+  public void onOK() {
+    finish();
+    String res = null;
+    if (lastResult != null) {
+      res = lastResult.getText();
+    }
+    com.rhomobile.barcode.Barcode.callOKCallback(res);
   }
 
   // Briefly show the contents of the barcode, then handle the result outside Barcode Scanner.
@@ -632,8 +692,10 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
   private void resetStatusView() {
     resultView.setVisibility(View.GONE);
+    /*
     statusView.setText(R.string.msg_default_status);
     statusView.setVisibility(View.VISIBLE);
+    */
     viewfinderView.setVisibility(View.VISIBLE);
     lastResult = null;
   }

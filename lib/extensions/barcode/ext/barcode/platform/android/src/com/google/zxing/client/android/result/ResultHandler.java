@@ -82,7 +82,7 @@ public abstract class ResultHandler {
   private static final String MARKET_REFERRER_SUFFIX =
       "&referrer=utm_source%3Dbarcodescanner%26utm_medium%3Dapps%26utm_campaign%3Dscan";
 
-  public static final int MAX_BUTTON_COUNT = 4;
+  public static final int MAX_BUTTON_COUNT = 3;
 
   private final ParsedResult result;
   private final Activity activity;
@@ -109,8 +109,10 @@ public abstract class ResultHandler {
 
     // Make sure the Shopper button is hidden by default. Without this, scanning a product followed
     // by a QR Code would leave the button on screen among the QR Code actions.
+    /*
     View shopperButton = activity.findViewById(R.id.shopper_button);
     shopperButton.setVisibility(View.GONE);
+    */
   }
 
   public ParsedResult getResult() {
