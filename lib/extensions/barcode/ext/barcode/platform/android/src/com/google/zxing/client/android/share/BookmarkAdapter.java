@@ -16,7 +16,7 @@
 
 package com.google.zxing.client.android.share;
 
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 
 import android.content.Context;
 import android.database.Cursor;

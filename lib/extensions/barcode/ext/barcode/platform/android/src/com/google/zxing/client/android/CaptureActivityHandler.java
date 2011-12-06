@@ -29,6 +29,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.rhomobile.rhodes.R;
+
 import java.util.Vector;
 
 /**

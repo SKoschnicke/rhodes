@@ -26,7 +26,7 @@ import android.net.wifi.WifiManager;
 import android.util.Log;
 import android.widget.TextView;
 
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 
 /**
  * Get a broadcast when the network is connected, and kill the activity.

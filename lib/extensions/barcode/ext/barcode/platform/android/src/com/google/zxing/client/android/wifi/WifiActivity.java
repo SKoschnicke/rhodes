@@ -30,7 +30,7 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.google.zxing.client.android.Intents;
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 
 /**
  * A new activity showing the progress of Wifi connection

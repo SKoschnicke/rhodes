@@ -28,6 +28,8 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.rhomobile.rhodes.R;
+
 import java.util.ArrayList;
 import java.util.List;
 

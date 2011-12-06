@@ -24,7 +24,7 @@ import android.widget.ArrayAdapter;
 
 import java.util.List;
 
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 
 /**
  * Manufactures list items which represent SBC results.

@@ -19,7 +19,7 @@ package com.google.zxing.client.android.wifi;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;

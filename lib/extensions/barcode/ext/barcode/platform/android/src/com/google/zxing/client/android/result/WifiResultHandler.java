@@ -17,7 +17,7 @@
 package com.google.zxing.client.android.result;
 
 import android.app.Activity;
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 import com.google.zxing.client.result.ParsedResult;
 import com.google.zxing.client.result.WifiParsedResult;
 

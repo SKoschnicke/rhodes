@@ -49,7 +49,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import com.google.zxing.client.android.LocaleManager;
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 import com.google.zxing.client.android.Intents;
 import com.google.zxing.client.android.AndroidHttpClient;
 

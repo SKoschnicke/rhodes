@@ -18,7 +18,7 @@ package com.google.zxing.client.android.history;
 
 import com.google.zxing.Result;
 import com.google.zxing.client.android.CaptureActivity;
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;

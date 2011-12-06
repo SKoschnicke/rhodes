@@ -26,6 +26,8 @@ import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.rhomobile.rhodes.R;
+
 import java.io.IOException;
 
 /**

@@ -20,7 +20,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.widget.TextView;
 import com.google.zxing.client.android.AndroidHttpClient;
-import com.google.zxing.client.android.R;
+import com.rhomobile.rhodes.R;
 import com.google.zxing.client.result.URIParsedResult;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;

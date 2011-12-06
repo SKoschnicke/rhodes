@@ -30,6 +30,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 
+import com.rhomobile.rhodes.R;
+
 /**
  * An HTML-based help screen with Back and Done buttons at the bottom.
  *
