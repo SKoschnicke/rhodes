@@ -72,7 +72,7 @@ public class Barcode {
 //    		 public void run() {
 				RhodesActivity ra = RhodesActivity.safeGetInstance();
 				Intent intent = new Intent(ra, com.google.zxing.client.android.CaptureActivity.class);
-				//intent.putExtra(com.google.zxing.client.android.CaptureActivity.CAMERA_INDEX_EXTRA, camera_index);
+				intent.putExtra(com.google.zxing.client.android.CaptureActivity.CAMERA_INDEX_EXTRA, camera_index);
 				ra.startActivity(intent);
 //    		 }
 //    	 });

@@ -82,6 +82,8 @@ import java.util.Vector;
  */
 public final class CaptureActivity extends Activity implements SurfaceHolder.Callback {
 
+  public static final String CAMERA_INDEX_EXTRA = "camera_index";
+	  
   private static final String TAG = CaptureActivity.class.getSimpleName();
 
   private static final int SHARE_ID = Menu.FIRST;
@@ -158,7 +160,14 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     setContentView(R.layout.capture);
 
-    CameraManager.init(getApplication());
+    int camera_index = 0;
+    Intent intent = getIntent();
+    if (intent != null) {
+     camera_index = intent.getIntExtra(CAMERA_INDEX_EXTRA, 0);
+    }
+    
+    CameraManager.init(getApplication(), camera_index);
+    
     viewfinderView = (ViewfinderView) findViewById(R.id.viewfinder_view);
     resultView = findViewById(R.id.result_view);
     statusView = (TextView) findViewById(R.id.status_view);
