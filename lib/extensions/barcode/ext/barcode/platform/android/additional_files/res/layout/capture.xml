@@ -114,9 +114,17 @@
       <Button android:id="@+id/cancel_button_a"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"
-              android:layout_gravity="bottom|left"
+              android:layout_gravity="top|left"
               android:drawableLeft="@drawable/cancel_icon"
               android:drawablePadding="6dip"
-              android:visibility="gone"/>
+              android:visibility="visible"/>
+
+      <Button android:id="@+id/flashlight_button"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_gravity="bottom|left"
+              android:drawableLeft="@drawable/flashlight_icon"
+              android:drawablePadding="6dip"
+              android:visibility="visible"/>
 
 </FrameLayout>

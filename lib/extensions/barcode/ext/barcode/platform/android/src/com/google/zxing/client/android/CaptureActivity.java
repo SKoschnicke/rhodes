@@ -171,6 +171,19 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     beepManager = new BeepManager(this);
 
     showHelpOnFirstLaunch();
+    
+    mCancelButton2 = (Button)findViewById(R.id.cancel_button_a);
+    mFlashlightButton = (Button)findViewById(R.id.flashlight_button);
+    mCancelButton2.setOnClickListener( new OnClickListener() {
+        public void onClick(View v) {
+          onCancel();
+        }});
+    mFlashlightButton.setOnClickListener( new OnClickListener() {
+        public void onClick(View v) {
+          onFlashToggle();
+        }});
+    mCancelButton2.setVisibility(View.VISIBLE);
+    mFlashlightButton.setVisibility(View.VISIBLE);
   }
 
   @Override
@@ -276,72 +289,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       return true;
     }
     return super.onKeyDown(keyCode, event);
-  }
-
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    super.onCreateOptionsMenu(menu);
-    menu.add(0, SHARE_ID, 0, R.string.menu_share)
-        .setIcon(android.R.drawable.ic_menu_share);
-    menu.add(0, HISTORY_ID, 0, R.string.menu_history)
-        .setIcon(android.R.drawable.ic_menu_recent_history);
-    menu.add(0, SETTINGS_ID, 0, R.string.menu_settings)
-        .setIcon(android.R.drawable.ic_menu_preferences);
-    menu.add(0, HELP_ID, 0, R.string.menu_help)
-        .setIcon(android.R.drawable.ic_menu_help);
-    menu.add(0, ABOUT_ID, 0, R.string.menu_about)
-        .setIcon(android.R.drawable.ic_menu_info_details);
-    return true;
-  }
-
-  // Don't display the share menu item if the result overlay is showing.
-  @Override
-  public boolean onPrepareOptionsMenu(Menu menu) {
-    super.onPrepareOptionsMenu(menu);
-    menu.findItem(SHARE_ID).setVisible(lastResult == null);
-    return true;
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()) {
-      case SHARE_ID: {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-        intent.setClassName(this, ShareActivity.class.getName());
-        startActivity(intent);
-        break;
-      }
-      case HISTORY_ID: {
-        AlertDialog historyAlert = historyManager.buildAlert();
-        historyAlert.show();
-        break;
-      }
-      case SETTINGS_ID: {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-        intent.setClassName(this, PreferencesActivity.class.getName());
-        startActivity(intent);
-        break;
-      }
-      case HELP_ID: {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-        intent.setClassName(this, HelpActivity.class.getName());
-        startActivity(intent);
-        break;
-      }
-      case ABOUT_ID:
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getString(R.string.title_about) + versionName);
-        builder.setMessage(getString(R.string.msg_about) + "\n\n" + getString(R.string.zxing_url));
-        builder.setIcon(R.drawable.launcher_icon);
-        builder.setPositiveButton(R.string.button_open_browser, aboutListener);
-        builder.setNegativeButton(R.string.button_cancel, null);
-        builder.show();
-        break;
-    }
-    return super.onOptionsItemSelected(item);
   }
 
   public void surfaceCreated(SurfaceHolder holder) {
@@ -450,6 +397,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private Button mCancelButton2 = null;
   private Button mRetakeButton = null;
   private Button mOKButton = null;
+  private Button mFlashlightButton = null;
 
   // Put up our own UI for how to handle the decoded contents.
   private void handleDecodeInternally(Result rawResult, ResultHandler resultHandler, Bitmap barcode) {
@@ -538,12 +486,11 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     mCancelButton = (Button)findViewById(R.id.cancel_button);
     mRetakeButton = (Button)findViewById(R.id.retake_button);
     mOKButton = (Button)findViewById(R.id.ok_button);
+    mFlashlightButton = (Button)findViewById(R.id.flashlight_button);
 
-    mCancelButton2.setOnClickListener( new OnClickListener() {
-      public void onClick(View v) {
-        onCancel();
-      }});
-    mCancelButton2.setVisibility(View.VISIBLE);
+    mCancelButton2.setVisibility(View.GONE);
+    mFlashlightButton.setVisibility(View.GONE);
+    
     mCancelButton.setOnClickListener( new OnClickListener() {
       public void onClick(View v) {
         onCancel();
@@ -573,6 +520,13 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
 
   public void onRetake() {
     resetStatusView();
+    
+    mCancelButton2 = (Button)findViewById(R.id.cancel_button_a);
+    mFlashlightButton = (Button)findViewById(R.id.flashlight_button);
+
+    mCancelButton2.setVisibility(View.VISIBLE);
+    mFlashlightButton.setVisibility(View.VISIBLE);
+    
     if (handler != null) {
       handler.sendEmptyMessage(R.id.restart_preview);
     }
@@ -585,6 +539,15 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       res = lastResult.getText();
     }
     com.rhomobile.barcode.Barcode.callOKCallback(res);
+  }
+  
+  public void onFlashToggle() {
+  	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+	SharedPreferences.Editor editor = settings.edit();
+	editor.putBoolean(PreferencesActivity.KEY_FRONT_LIGHT, !settings.getBoolean(PreferencesActivity.KEY_FRONT_LIGHT, false));
+	editor.commit();
+	onPause();
+	onResume();
   }
 
   // Briefly show the contents of the barcode, then handle the result outside Barcode Scanner.
