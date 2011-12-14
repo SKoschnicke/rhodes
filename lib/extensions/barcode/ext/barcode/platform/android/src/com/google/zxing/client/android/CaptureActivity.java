@@ -179,8 +179,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     inactivityTimer = new InactivityTimer(this);
     beepManager = new BeepManager(this);
 
-    showHelpOnFirstLaunch();
-    
     mCancelButton2 = (Button)findViewById(R.id.cancel_button_a);
     mFlashlightButton = (Button)findViewById(R.id.flashlight_button);
     mCancelButton2.setOnClickListener( new OnClickListener() {
